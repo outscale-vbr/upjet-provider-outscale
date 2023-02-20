@@ -3,4 +3,4 @@ This example will create a snapshot with:
 * Snapshot
 
 
-See more details on [snapshot] (https://docs.outscale.com/en/userguide/About-Snapshots.html)
+See more details on [snapshot](https://docs.outscale.com/en/userguide/About-Snapshots.html)
