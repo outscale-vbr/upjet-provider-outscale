@@ -5,3 +5,5 @@ remote = f"https://{username}:{password}@github.com/outscale-vbr/upjet-provider-
 repo = Repo()
 repo.git.add("*")
 repo.index.commit("hello")
+origin = repo.remote(name="origin")
+origin.push()
