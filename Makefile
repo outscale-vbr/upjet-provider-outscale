@@ -3,7 +3,14 @@
 
 PROJECT_NAME := upjet-provider-outscale
 PROJECT_REPO := github.com/outscale-vbr/$(PROJECT_NAME)
+UPJET_SECRET_SOURCE := providerconfig/secret.yaml.tmpl
+UPJET_SECRET_FILE := providerconfig/secret.yaml
+UPJET_PROVIDER_SOURCE := providerconfig/provider.yaml.tmpl
+UPJET_PROVIDER_FILE := providerconfig/provider.yaml
+UPJET_PROVIDER_CONFIG_FILE := providerconfig/providerconfig.yaml
 
+RELEASE_DIR := out
+GET_GOPATH ?= $(shell go env GOPATH)
 export TERRAFORM_VERSION := 1.3.3
 
 export TERRAFORM_PROVIDER_SOURCE := outscale/outscale
@@ -211,3 +218,40 @@ docker-buildx: # Build docker image with the manager
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
+
+.PHONY: install-crossplane
+install-crossplane:
+	kubectl create namespace croosplane-system
+	helm repo add crossplane-stable https://charts.crossplane.io/stable
+	helm repo update
+	helm install crossplane --namespace crossplane-system crossplane-stable/crossplane
+
+ENVSUBST = $(shell pwd)/bin/envsubst
+.PHONY: envsubst
+envsubst:
+  GOPATH=${GET_GOPATH} ./hack/ensure-envsubst.sh 
+
+.PHONY: providerconfig
+providerconfig: envsubst
+	$(ENVSUBST) < $(UPJET_SECRET_SOURCE) > $(UPJET_SECRET_FILE) 
+	$(ENVSUBST) < $(UPJET_PROVIDER_SOURCE) > $(UPJET_PROVIDER_FILE) 
+	kubectl create namespace crossplane-system --dry-run=client -o yaml | kubectl apply -f - 
+	kubectl apply -f $(UPJET_PROVIDER_CONFIG_FILE) 
+	kubectl apply -f $(UPJET_SECRET_FILE) 
+	kubectl apply -f $(UPJET_PROVIDER_FILE) 
+
+.PHONY: clone
+clone: # Clone repository
+	python3 manage-ci.py -c
+
+.PHONY: apply
+apply: # Apply repository
+	python3 manage-ci.py -a
+
+.PHONY: buildpush
+buildpush:
+	python3 manage-ci.py -bp
+
+.PHONY: deployment
+deployment: 
+	python3 manage-ci.py -d
