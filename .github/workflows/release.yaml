@@ -1,0 +1,139 @@
+name: upgrade-terraform
+
+on:
+  push:
+jobs:
+  upgrade-terraform:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout uppjet
+      uses: actions/checkout@v3
+      with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+    - name: Checkout osc-k8s-rke-cluster
+      uses: actions/checkout@v3
+      with:
+        repository: 'outscale-dev/osc-k8s-rke-cluster'
+        path: "rke-cluster-for-upjet"
+        ref: master
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v2.0
+      with:
+        version: v1.22.7
+      id: install
+    - name: Install golang
+      uses: actions/setup-go@v3
+      with:
+        go-version: '>=1.17.8'
+    - name: Install helm
+      uses: azure/setup-helm@v3
+      with:
+        version: v3.10.1
+    - name: Deploy Cluster
+      uses: ./rke-cluster-for-upjet/github_actions/deploy_cluster/
+      with:
+        repository_folder: "rke-cluster-for-upjet"
+        osc_access_key: ${{ secrets.OSC_ACCESS_KEY }}
+        osc_secret_key: ${{ secrets.OSC_SECRET_KEY }}
+        osc_region: ${{ secrets.OSC_REGION }}
+        image_id: ${{ secrets.OMI_ID }}
+    - name: Wait Kubernetes control plane is up and running
+      uses: nick-invision/retry@v2
+      with:
+        timeout_seconds: 30
+        max_attempts: 20
+        retry_wait_seconds: 30
+        command: kubectl get --raw='/readyz?verbose'
+      env:
+        KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
+    - name: Wait all infrastructure app are really up and running
+      uses: jupyterhub/action-k8s-await-workloads@v1
+      with:
+        workloads: ""
+        namespace: "" 
+        timeout: 600
+        max-restarts: -1
+      env:
+        KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
+    - name: Deploy Docker-registry into cluster
+      run: |
+        ansible-playbook addons/docker-registry/playbook.yaml
+        ./addons/docker-registry/start_port_forwarding.sh &
+      env:
+        KUBECONFIG: rke/kube_config_cluster.yml
+        ANSIBLE_CONFIG: ansible.cfg
+      working-directory: rke-cluster-for-upjet
+    - name: Wait to access registry
+      uses: nick-invision/retry@v2
+      with:
+        timeout_seconds: 30
+        max_attempts: 10
+        retry_wait_seconds: 1
+        command: curl http://127.0.0.1:4242/v2
+    - name: Retrieve NodePort Ip and NodePort
+      run: |
+        echo nodeport_port=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services docker-registry) >> $GITHUB_ENV
+        echo nodeport_ip=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")  >> $GITHUB_ENV
+      env:
+        KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
+    - name: Clone Repository
+      run: make clone
+      env:
+        git_full_local_path: /tmp/upjet-provider-outscale
+    - name: Build and Push Docker Image
+      run: |
+        sudo apt-get update
+        sudo apt install -y docker-buildx-plugin 
+        make buildpush
+      env:
+        IMG: 127.0.0.1:4242/upjet-provider-outscale:${{ github.sha }}
+        DOCKER_BUILDKIT: 1
+    - name: Deploy crossplane
+      run: make install-crossplane
+      shell: bash
+      env:
+        KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
+    - name: check crossplane
+      run: make deployment
+      shell: bash
+      env:
+        KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
+    - name: Create ns and set credential
+      run: make providerconfig
+      shell: bash
+      env:
+         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
+         IMG: ${nodeport_ip}:${nodeport_port}/cluster-api-outscale-controller:${{ github.sha }}
+         OSC_ACCESS_KEY: ${{secrets.OSC_ACCESS_KEY}}
+         OSC_SECRET_KEY: ${{secrets.OSC_SECRET_KEY}}
+         OSC_REGION: ${{ secrets.OSC_REGION }}
+    - name: Deploy upjet
+      run: make deploy
+      shell: bash
+      id: deploy-capo
+      env:
+        KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
+        IMG: ${nodeport_ip}:${nodeport_port}/cluster-api-outscale-controller:${{ github.sha }}
+    - name: Wait for pod to be ok
+      run: |
+        sleep 180
+        kubectl get provider -A
+        kubectl get pod -n crossplane-system
+      shell: bash
+    - name: Create PR
+      run: make apply
+      shell: bash
+      env:
+        KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
+        git_password: ${{ secrets.UPJET_TOKEN }}
+    - name: Destroy cluster
+      uses: ./rke-cluster-for-cluster-api/github_actions/destroy_cluster/
+      if: ${{ always() }}
+      with:
+        repository_folder: "./rke-cluster-for-cluster-api"
+        osc_access_key: ${{ secrets.OSC_ACCESS_KEY }}
+        osc_secret_key: ${{ secrets.OSC_SECRET_KEY }}
+        osc_region: ${{ secrets.OSC_REGION }}
+    
+    
