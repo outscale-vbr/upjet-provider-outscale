@@ -1,6 +1,7 @@
 # ====================================================================================
 # Setup Project
 
+
 PROJECT_NAME := upjet-provider-outscale
 PROJECT_REPO := github.com/outscale-vbr/$(PROJECT_NAME)
 UPJET_SECRET_SOURCE := providerconfig/secret.yaml.tmpl
@@ -177,7 +178,7 @@ CROSSPLANE_NAMESPACE = upbound-system
 
 uptest: $(UPTEST) $(KUBECTL) $(KUTTL)
 	@$(INFO) running automated tests
-	@KUBECTL=$(KUBECTL) KUTTL=$(KUTTL) $(UPTEST) e2e "${UPTEST_EXAMPLE_LIST}" --setup-script=cluster/test/setup.sh || $(FAIL)
+	@KUBECTL=$(KUBECTL) KUTTL=$(KUTTL) $(UPTEST) e2e "${UPTEST_EXAMPLE_LIST}" || $(FAIL)
 	@$(OK) running automated tests
 
 local-deploy: build controlplane.up local.xpkg.deploy.provider.$(PROJECT_NAME)
@@ -186,7 +187,7 @@ local-deploy: build controlplane.up local.xpkg.deploy.provider.$(PROJECT_NAME)
 	@$(KUBECTL) -n upbound-system wait --for=condition=Available deployment --all --timeout=5m
 	@$(OK) running locally built provider
 
-e2e: local-deploy uptest
+e2e: uptest
 
 .PHONY: cobertura submodules fallthrough run crds.clean
 
@@ -255,3 +256,4 @@ buildpush:
 .PHONY: deployment
 deployment: 
 	python3 manage-ci.py -d
+

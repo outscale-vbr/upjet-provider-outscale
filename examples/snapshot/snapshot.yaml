@@ -10,7 +10,7 @@ spec:
       name: volume
     tags:
       - key: Name
-        value: snap
+        value: cp-snap
   providerConfigRef:
     name: default 
 ---

@@ -9,5 +9,8 @@ spec:
     subregionName: "eu-west-2a"
     netIdRef: 
       name: main
+    tags:
+      - key: Name
+        value: cp-subnet
   providerConfigRef:
     name: default 

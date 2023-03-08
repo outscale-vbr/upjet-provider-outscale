@@ -77,6 +77,10 @@ jobs:
         echo nodeport_ip=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")  >> $GITHUB_ENV
       env:
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
+    - name: Install deps
+      run: sudo pip3 install requirements.txt
+      env:
+        git_full_local_path: /tmp/upjet-provider-outscale
     - name: Clone Repository
       run: make clone
       env:

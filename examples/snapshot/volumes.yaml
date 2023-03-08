@@ -10,6 +10,6 @@ spec:
     volumeType: "gp2"
     tags:
       - key: Name
-        value: volume
+        value: cp-volume
   providerConfigRef:
     name: default 
