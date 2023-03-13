@@ -78,7 +78,7 @@ jobs:
       env:
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
     - name: Install deps
-      run: sudo pip3 install -r requirements.txt
+      run: sudo pip3 install --ignore-installed -r requirements.txt
       env:
         git_full_local_path: /tmp/upjet-provider-outscale
     - name: Clone Repository
