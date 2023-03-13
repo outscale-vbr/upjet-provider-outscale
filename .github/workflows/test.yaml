@@ -30,9 +30,11 @@ jobs:
       uses: azure/setup-helm@v3
       with:
         version: v3.10.1
-    - uses: actions/setup-python@v4
+    - name: Install python version
+      uses: gabrielfalcao/pyenv-action@v11
       with:
-        python-version: '3.10' 
+        default: "3.10"
+        command: pip install -U pip
     - name: Install deps
       run: |
         sudo apt install python3-testresources
