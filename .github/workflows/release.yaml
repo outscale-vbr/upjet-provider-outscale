@@ -139,7 +139,7 @@ jobs:
       uses: ./rke-cluster-for-upjet/github_actions/destroy_cluster/
       if: ${{ always() }}
       with:
-        repository_folder: "./rke-cluster-for-cluster-api"
+        repository_folder: "./rke-cluster-for-upjet"
         osc_access_key: ${{ secrets.OSC_ACCESS_KEY }}
         osc_secret_key: ${{ secrets.OSC_SECRET_KEY }}
         osc_region: ${{ secrets.OSC_REGION }}
