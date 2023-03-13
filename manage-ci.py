@@ -230,20 +230,5 @@ def main():
 
         
 
-   # create_issue("outscale-vbr/test", "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", "hello", "hello world")
-   # get_branch(remote,full_local_path, branch)
-   # set_config(name, email, full_local_path)
-   # execute_bash_cmd(["make", "get-info"], full_local_path)
-   # add_and_commit(full_local_path, commit_msg)
-   # push(full_local_path, branch)
-   # create_pull_request(
-   #     owner_name,
-   #     repo_name,
-   #     title,
-   #     description,
-   #     branch,
-   #     base_branch,
-   #     password
-   # )
 if __name__ == "__main__":
     main()
