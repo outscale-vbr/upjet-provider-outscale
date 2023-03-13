@@ -85,6 +85,8 @@ jobs:
       run: make clone
       env:
         git_full_local_path: /tmp/upjet-provider-outscale
+        git_password: ${{ secrets.UPJET_TOKEN }}
+
     - name: Build and Push Docker Image
       run: |
         sudo apt-get update
@@ -103,6 +105,7 @@ jobs:
       shell: bash
       env:
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
+        git_password: ${{ secrets.UPJET_TOKEN }}
     - name: Create ns and set credential
       run: make providerconfig
       shell: bash
@@ -112,12 +115,14 @@ jobs:
          OSC_ACCESS_KEY: ${{secrets.OSC_ACCESS_KEY}}
          OSC_SECRET_KEY: ${{secrets.OSC_SECRET_KEY}}
          OSC_REGION: ${{ secrets.OSC_REGION }}
+         git_password: ${{ secrets.UPJET_TOKEN }}
     - name: Deploy upjet
       run: make deploy
       shell: bash
       env:
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
         IMG: ${nodeport_ip}:${nodeport_port}/cluster-api-outscale-controller:${{ github.sha }}
+        git_password: ${{ secrets.UPJET_TOKEN }}
     - name: Wait for pod to be ok
       run: |
         sleep 180
