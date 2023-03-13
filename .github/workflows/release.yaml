@@ -98,7 +98,7 @@ jobs:
         DOCKER_BUILDKIT: 1
     - name: Deploy crossplane
       run: make install-crossplane
-      shell: 
+      shell: bash
       working-directory: ${{ github.workspace }}/upjet-provider-outscale
       env:
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
