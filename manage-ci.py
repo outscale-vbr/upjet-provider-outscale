@@ -38,6 +38,8 @@ def get_branch(remote, full_local_path, branch):
     Repo.clone_from(remote,full_local_path)
     repo = Repo(full_local_path)
     git = repo.git
+    git.checkout
+    git.checkout("HEAD", b=branch)
     git.checkout("HEAD", b=branch)
 
 def add_and_commit(full_local_path, commit_msg):
