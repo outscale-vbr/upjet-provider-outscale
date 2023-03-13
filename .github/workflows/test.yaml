@@ -36,6 +36,7 @@ jobs:
     - name: Install deps
       run: |
         sudo apt install python3-testresources
+        sudo pip3 install gitpython
         sudo pip3 install --ignore-installed -r requirements.txt
         sudo mkdir /root/.kube
         sudo touch /root/.kube/config
