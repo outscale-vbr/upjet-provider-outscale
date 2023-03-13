@@ -174,7 +174,7 @@ def main():
     get_terraform_version = args.get
 
     my_env = os.environ.copy()
-    config.load_kube_config()
+   # config.load_kube_config()
     release_title, release_body = get_release(watch_target_projet,password)
     terraform_version = release_title.replace("v","")
     current_branch = "{0}-{1}".format(branch, terraform_version)
