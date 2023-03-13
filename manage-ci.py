@@ -146,7 +146,7 @@ def main():
     branch = os.getenv('git_branch',"release-terraform")
     commit_msg = os.getenv('git_commit',"Update with a new version of terraform")
     owner_name = os.getenv('git_owner', "outscale-vbr")
-    repo_name = os.getenv('git_repo', "test")
+    repo_name = os.getenv('git_repo', "upjet-provider-outscale")
     remote = f"https://{username}:{password}@github.com/{owner_name}/{repo_name}.git"
     terraform_version_file = os.getenv("terraform_version_file", "./terraform_version")
     
