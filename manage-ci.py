@@ -35,11 +35,11 @@ def create_pull_request(owner_name, repo_name, title, description, head_branch, 
 
 
 def get_branch(remote, full_local_path, branch):
-    Repo.clone_from(remote,full_local_path)
+    Repo.clone_from(remote,full_local_path, branch="first-step")
     repo = Repo(full_local_path)
     git = repo.git
     git.checkout
-    git.checkout("first-step", b=branch)
+    git.checkout("HEAD", b=branch)
 
 def add_and_commit(full_local_path, commit_msg):
     repo = Repo(full_local_path)
