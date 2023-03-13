@@ -47,6 +47,7 @@ jobs:
       run: make clone
       env:
         git_full_local_path: /tmp/upjet-provider-outscale
+        git_password: ${{ secrets.UPJET_TOKEN }}
     - name: Build and Push Docker Image
       run: |
         sudo apt-get update
