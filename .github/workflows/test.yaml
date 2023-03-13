@@ -51,7 +51,10 @@ jobs:
     - name: Build and Push Docker Image
       run: |
         sudo apt-get update
-        sudo apt install -y docker-buildx-plugin 
+        wget https://github.com/docker/buildx/releases/download/v0.10.4/buildx-v0.10.4.linux-amd64
+        chmod +x buildx-v0.10.4.linux-amd64
+        mv buildx-v0.10.4.linux-amd64 docker-buildx
+        mv docker-buildx $HOME/.docker/cli-plugins
         make buildpush
       env:
         IMG: 127.0.0.1:4242/upjet-provider-outscale:${{ github.sha }}
