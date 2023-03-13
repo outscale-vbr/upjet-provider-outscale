@@ -39,8 +39,7 @@ def get_branch(remote, full_local_path, branch):
     repo = Repo(full_local_path)
     git = repo.git
     git.checkout
-    git.checkout("HEAD", b=branch)
-    git.checkout("HEAD", b=branch)
+    git.checkout("first-step", b=branch)
 
 def add_and_commit(full_local_path, commit_msg):
     repo = Repo(full_local_path)
