@@ -35,6 +35,9 @@ spec:
   forProvider:
     netIdRef: 
       name: net
+    tags:
+      - key: Name
+        value: routetable-public
   providerConfigRef:
     name: default 
 ---
@@ -47,5 +50,8 @@ spec:
   forProvider:
     netIdRef: 
       name: net
+    tags:
+      - key: Name
+        value: routetable-private
   providerConfigRef:
     name: default 
