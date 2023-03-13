@@ -133,6 +133,18 @@ def checkRouteTableState(gateway, tag, routeTableName, my_env):
             print("Find not the same routeTableId", routeTableId)
             return False
         
+def checkRouteState(gateway, routeTableId, routeName, my_env):
+    routeTables = gateway.ReadRouteTables(
+        Filters={
+            "RouteTableIds": [routeTableId],
+        }
+    )["RouteTables"]
+    for routeTable in routeTables:
+        for route in routeTable['Routes']:
+            if route['State'] == 'active':
+                return True
+            else:
+                return False
 
                 
 def checkSecurityGroupState(gateway, tag, securityGroupName, my_env):
@@ -294,7 +306,16 @@ def checkSecurityGroupRuleAvailable(gateway, time_sleep, flow, fromPortRange, to
             print("SecurityGroupRule is not available")
         time.sleep(time_sleep)
 
-
+def checkRouteAvailable(gateway, time_sleep, routeTableId, routeName, my_env):
+    timeout = time.time() + WAIT_FOR_ANY_TIMEOUT
+    while time.time() < timeout:
+        routeState = checkRouteState(gateway, routeTableId, routeName, my_env)
+        if routeState:
+            print("Route is available")
+            break
+        else:
+            print("Route is not available")
+        time.sleep(time_sleep)
 
 def getNetId(netName, my_env):
     result = subprocess.run(["kubectl", "get",  "net", netName, "-o=jsonpath='{.status.atProvider.netId}'"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=my_env )
@@ -366,9 +387,13 @@ def main():
     #checkInternetServiceAvailable(gateway, "Name=internetservice", 5, "internetservice", my_env)
     #execute_bash_cmd(["kubectl", "delete", "-f", "loadbalancer/internetservice.yaml"], "./examples", my_env )
 
-    #execute_bash_cmd(["kubectl", "apply", "-f", "loadbalancer/routetable.yaml"], "./examples", my_env )
-    #checkRouteTableAvailable(gateway, "Name=routetable-private", 5, "routetable-private", my_env)
-    ##execute_bash_cmd(["kubectl", "delete", "-f", "loadbalancer/routetable.yaml"], "./examples", my_env )
+    execute_bash_cmd(["kubectl", "apply", "-f", "loadbalancer/routetable.yaml"], "./examples", my_env )
+    execute_bash_cmd(["kubectl", "apply", "-f", "loadbalancer/route.yaml"], "./examples", my_env )
+    checkRouteTableAvailable(gateway, "Name=routetable-public", 5, "routetable-public", my_env)
+    routeTableId = getRouteTableId("routetable-public", my_env).replace("'", "")
+    checkRouteAvailable(gateway,  5, routeTableId, "route-public", my_env)
+    execute_bash_cmd(["kubectl", "delete", "-f", "loadbalancer/route.yaml"], "./examples", my_env )
+    execute_bash_cmd(["kubectl", "delete", "-f", "loadbalancer/routetable.yaml"], "./examples", my_env )
 
     #execute_bash_cmd(["kubectl", "apply", "-f", "loadbalancer/securitygroup.yaml"], "./examples", my_env )
     #execute_bash_cmd(["kubectl", "apply", "-f", "loadbalancer/securitygrouprule.yaml"], "./examples", my_env )
