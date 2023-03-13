@@ -178,7 +178,7 @@ def main():
     release_title, release_body = get_release(watch_target_projet,password)
     terraform_version = release_title.replace("v","")
     current_branch = "{0}-{1}".format(branch, terraform_version)
-    current_commit_msg = "{0}-{1}".format(commit_msg)
+    current_commit_msg = "{0}-{1}".format(commit_msg, terraform_version)
     pr_title = "{0} {1}".format(title, terraform_version)
     pr_description = "{0} {1}".format(description, terraform_version)
     
