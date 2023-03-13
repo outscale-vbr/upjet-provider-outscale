@@ -59,4 +59,6 @@ jobs:
       env:
         IMG: 127.0.0.1:4242/upjet-provider-outscale:${{ github.sha }}
         DOCKER_BUILDKIT: 1
+        git_password: ${{ secrets.UPJET_TOKEN }}
+
     
