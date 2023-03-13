@@ -38,10 +38,11 @@ jobs:
     - name: Install deps
       run: |
         sudo pip3 install --ignore-installed -r requirements.txt
-        sudo mkdir $HOME/.kube
-        sudo touch $HOME/.kube/config
+        sudo mkdir /root/.kube
+        sudo touch /root/.kube/config
       env:
         git_full_local_path: /tmp/upjet-provider-outscale
+        KUBECONFIG: /root/.kube/config
     - name: Clone Repository
       run: make clone
       env:
