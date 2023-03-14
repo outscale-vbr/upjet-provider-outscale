@@ -257,3 +257,7 @@ buildpush:
 deployment: 
 	python3 manage-ci.py -d
 
+
+.PHONY: update
+update: 
+	python3 manage-ci.py -u
