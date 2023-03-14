@@ -32,6 +32,30 @@ def checkNetState(gateway, tag, netName, my_env):
         else:
             return False
 
+def checkVmState(gateway, tag, vmName, my_env):
+    vms = gateway.ReadVms(
+        Filters={
+            "Tags": [tag],
+        }
+    )["Vms"]
+    print(vms)
+    for vm in vms:
+        if vm['State'] == 'running':
+            vmId = getVmId(vmName, my_env).replace("'","")
+            print("Find vmId from vm object", vmId)
+            print("Find vmId", vm['VmId'])
+            if vm['VmId'] == vmId:
+                print("Find the same vmId", vmId)
+                return True
+            else:
+                print("Find not the same vmId", vmId)
+                return False
+        else:
+            return False
+
+
+
+
 def checkVolumeState(gateway, tag, volumeName, my_env):
     volumes = gateway.ReadVolumes(
         Filters={ 
@@ -82,11 +106,11 @@ def checkSubnetState(gateway, tag, subnetName, my_env):
     print(subnets)
 
     for subnet in subnets:
-        if subnets['State'] == 'available':
+        if subnet['State'] == 'available':
             subnetId = getSubnetId(subnetName, my_env).replace("'", "")
             print("Find subnetId from subnet object", subnetId)
-            print("Find subnetId", subnet["subnetId"])
-            if subnet["subnetId"] == subnetId:
+            print("Find subnetId", subnet['SubnetId'])
+            if subnet['SubnetId'] == subnetId:
                 print("Find the same subneetId", subnetId)
                 return True
             else:
@@ -204,6 +228,16 @@ def checkNetAvailable(gateway, tag, time_sleep, netName, my_env):
             print("Net is not yet available")
         time.sleep(time_sleep)
 
+def checkVmAvailable(gateway, tag, time_sleep, vmName, my_env):
+    timeout = time.time() + WAIT_FOR_ANY_TIMEOUT
+    while time.time() < timeout:
+        vmState = checkVmState(gateway, tag, vmName, my_env)
+        if vmState:
+            print("Vm is now available")
+            break
+        else:
+            print("Vm is not yet available")
+        time.sleep(time_sleep)
 
 def checkSubnetAvailable(gateway, tag, time_sleep, subnetName, my_env):
     timeout = time.time() + WAIT_FOR_ANY_TIMEOUT
@@ -350,6 +384,10 @@ def getSecurityGroupFromSecurityGroupId(securityGroupRuleName, my_env):
     result = subprocess.run(["kubectl", "get",  "securityGroupRule", securityGroupRuleName, "-o=jsonpath='{.status.atProvider.id}'"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=my_env )
     return result.stdout
 
+def getVmId(vmName, my_env):
+    result = subprocess.run(["kubectl", "get",  "vm", vmName, "-o=jsonpath='{.status.atProvider.id}'"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=my_env )
+    return result.stdout
+
 def main():
     my_env = os.environ.copy()
     my_env['KUBECONFIG'] = "/root/.kube/config"
@@ -360,49 +398,26 @@ def main():
         **{"access_key": access_key, "secret_key": secret_key, "region": region}
     )
 
-    # Check Net Object exist
-    # execute_bash_cmd(["kubectl", "apply", "-f", "net/"], "./examples", my_env )
-    # checkNetAvailable(gateway, "Name=cp-net", 5, "main", my_env)
-    # execute_bash_cmd(["kubectl", "delete", "-f", "net/"], "./examples", my_env )
+    # Check Net_Vm
+    execute_bash_cmd(["kubectl", "apply", "-f", "net_vm/"], "./examples", my_env )
+    checkNetAvailable(gateway, "Name=cp-net", 5, "cp-net", my_env)
+    checkSubnetAvailable(gateway, "Name=cp-public-subnet", 5, "cp-public-subnet", my_env)
+    checkKeypairAvailable(gateway, "cp-keypair", 5)
+    checkInternetServiceAvailable(gateway, "Name=cp-igw", 5, "cp-igw", my_env)
+    checkRouteTableAvailable(gateway, "Name=cp-public-rtb", 5, "cp-public-rtb", my_env)
+    routeTableId = getRouteTableId("cp-public-rtb", my_env).replace("'", "")
+    checkRouteAvailable(gateway,  5, routeTableId, "cp-public-route", my_env)
+    checkSecurityGroupAvailable(gateway, "Name=cp-public-sg", 5, "cp-public-sg", my_env)
+    securityGroupId = getSecurityGroupId("cp-public-sg", my_env).replace("'", "")
+    checkSecurityGroupRuleAvailable(gateway, 5, "Inbound", "8080", "8080", securityGroupId, "cp-public-sg-rule", my_env)
+    checkVmAvailable(gateway, "Name=cp-vm", 5, "cp-vm", my_env)
+    execute_bash_cmd(["kubectl", "delete", "-f", "net_vm/"], "./examples", my_env )
 
-    # Check Subnet object exist
-    # execute_bash_cmd(["kubectl", "apply", "-f", "subnet/"], "./examples", my_env )
-    # checkNetAvailable(gateway, "Name=cp-net", 5, "main", my_env)
-    # checkSubnetAvailable(gateway, "Name=cp-subnet", 5, "main", my_env)
-    # execute_bash_cmd(["kubectl", "delete", "-f", "subnet/"], "./examples", my_env )
-
-    # check Keypair object exist
-   # execute_bash_cmd(["kubectl", "apply", "-f", "keypair/"], "./examples", my_env )
-   # checkKeypairAvailable(gateway, "cp-keypair", 5)
-   # execute_bash_cmd(["kubectl", "delete", "-f", "keypair/"], "./examples", my_env )
-
-    # check Volume object exist
-    # execute_bash_cmd(["kubectl", "apply", "-f", "snapshot/"], "./examples", my_env )
-    # checkVolumeAvailable(gateway, "Name=cp-volume", 5, "volume", my_env)
-    # checkSnapshotAvailable(gateway, "Name=cp-snap", 5, "snap", my_env)
-    # execute_bash_cmd(["kubectl", "delete", "-f", "snapshot/"], "./examples", my_env )
-
-    # check internetService object exist
-    #execute_bash_cmd(["kubectl", "apply", "-f", "loadbalancer/internetservice.yaml"], "./examples", my_env )
-    #checkInternetServiceAvailable(gateway, "Name=internetservice", 5, "internetservice", my_env)
-    #execute_bash_cmd(["kubectl", "delete", "-f", "loadbalancer/internetservice.yaml"], "./examples", my_env )
-
-    execute_bash_cmd(["kubectl", "apply", "-f", "loadbalancer/routetable.yaml"], "./examples", my_env )
-    execute_bash_cmd(["kubectl", "apply", "-f", "loadbalancer/route.yaml"], "./examples", my_env )
-    checkRouteTableAvailable(gateway, "Name=routetable-public", 5, "routetable-public", my_env)
-    routeTableId = getRouteTableId("routetable-public", my_env).replace("'", "")
-    checkRouteAvailable(gateway,  5, routeTableId, "route-public", my_env)
-    execute_bash_cmd(["kubectl", "delete", "-f", "loadbalancer/route.yaml"], "./examples", my_env )
-    execute_bash_cmd(["kubectl", "delete", "-f", "loadbalancer/routetable.yaml"], "./examples", my_env )
-
-    #execute_bash_cmd(["kubectl", "apply", "-f", "loadbalancer/securitygroup.yaml"], "./examples", my_env )
-    #execute_bash_cmd(["kubectl", "apply", "-f", "loadbalancer/securitygrouprule.yaml"], "./examples", my_env )
-    #checkSecurityGroupAvailable(gateway, "Name=sgpublic", 5, "sgpublic", my_env)
-    #securityGroupId = getSecurityGroupId("sgpublic", my_env).replace("'", "")
-    #checkSecurityGroupRuleAvailable(gateway, 5, "Inbound", "8080", "8080", securityGroupId, "sg-rule-public-inbound", my_env)
-    #execute_bash_cmd(["kubectl", "delete", "-f", "loadbalancer/securitygrouprule.yaml"], "./examples", my_env )
-    #execute_bash_cmd(["kubectl", "delete", "-f", "loadbalancer/securitygroup.yaml"], "./examples", my_env )
-
+    # Check Snapshot
+    execute_bash_cmd(["kubectl", "apply", "-f", "snapshot/"], "./examples", my_env )
+    checkVolumeAvailable(gateway, "Name=cp-volume", 5, "volume", my_env)
+    checkSnapshotAvailable(gateway, "Name=cp-snap", 5, "snap", my_env)
+    execute_bash_cmd(["kubectl", "delete", "-f", "snapshot/"], "./examples", my_env )
 
 if __name__ == "__main__":
     main()
