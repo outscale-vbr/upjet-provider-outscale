@@ -141,6 +141,8 @@ jobs:
         kubectl get provider -A
         kubectl get pod -n crossplane-system
       shell: bash
+      env: 
+        KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
     - name: Test Net
       run: UPTEST_EXAMPLE_LIST=examples/net/net.yaml make e2e --help
       shell: bash
