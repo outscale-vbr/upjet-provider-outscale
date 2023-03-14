@@ -140,11 +140,14 @@ jobs:
         sleep 180
         kubectl get provider -A
         kubectl get pod -n crossplane-system
+        cat providerconfig/provider.yaml
+        kubectl describe providerrevisions.pkg.crossplane.io 
+        kubectl describe providers
       shell: bash
       env: 
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
     - name: Test Net
-      run: UPTEST_EXAMPLE_LIST=examples/net/net.yaml make e2e --help
+      run: UPTEST_EXAMPLE_LIST=examples/net/net.yaml make e2e
       shell: bash
       env: 
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
