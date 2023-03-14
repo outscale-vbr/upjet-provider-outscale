@@ -77,6 +77,11 @@ jobs:
         echo nodeport_ip=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")  >> $GITHUB_ENV
       env:
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
+    - name: Install python version
+      uses: gabrielfalcao/pyenv-action@v11
+      with:
+        default: "3.10"
+        command: pip install -U pip
     - name: Install deps
       run: |
         sudo pip3 install --ignore-installed -r requirements.txt
