@@ -209,7 +209,6 @@ def main():
         execute_bash_cmd(["make", "submodules"], full_local_path, my_env )
         execute_bash_cmd(["make", "build"], full_local_path, my_env)
         execute_bash_cmd(["make", "docker-buildx"], full_local_path, my_env)
-        execute_bash_cmd(["make", "docker-push"], full_local_path, my_env)     
     elif buildpush:
         my_env['TERRAFORM_PROVIDER_VERSION'] = terraform_version
         my_env['TERRAFORM_NATIVE_PROVIDER_BINARY'] = "terraform-provider-outscale_v{0}".format(terraform_version)
