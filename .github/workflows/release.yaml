@@ -125,11 +125,15 @@ jobs:
       env:
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
     - name: Create ns and set credential
-      run: make providerconfig
+      run: 
+        export nodeport_port=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services docker-registry)
+        export nodeport_ip=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+        export IMG="$nodeport_ip:$nodeport_port/$LOCAL_IMG"
+        make providerconfig
       shell: bash
       env:
          KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
-         IMG: ${nodeport_ip}:${nodeport_port}/cluster-api-outscale-controller:${{ github.sha }}
+         LOCAL_IMG: cluster-api-outscale-controller:${{ github.sha }}
          OSC_ACCESS_KEY: ${{secrets.OSC_ACCESS_KEY}}
          OSC_SECRET_KEY: ${{secrets.OSC_SECRET_KEY}}
          OSC_REGION: ${{ secrets.OSC_REGION }}
@@ -147,7 +151,11 @@ jobs:
       env: 
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
     - name: Test Net
-      run: UPTEST_EXAMPLE_LIST=examples/net/net.yaml make e2e
+      run: |
+        wget https://github.com/upbound/uptest/releases/download/v0.5.0/uptest_linux-amd64
+        mv uptest_linux-amd64 /usr/local/bin/uptest
+        chmod +x /usr/local/bin/uptest
+        UPTEST_EXAMPLE_LIST=examples/net/net.yaml make e2e
       shell: bash
       env: 
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
