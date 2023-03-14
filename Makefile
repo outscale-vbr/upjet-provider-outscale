@@ -234,6 +234,7 @@ envsubst:
 
 .PHONY: providerconfig
 providerconfig: envsubst
+	kubectl apply -f package/crds
 	$(ENVSUBST) < $(UPJET_SECRET_SOURCE) > $(UPJET_SECRET_FILE) 
 	$(ENVSUBST) < $(UPJET_PROVIDER_SOURCE) > $(UPJET_PROVIDER_FILE) 
 	kubectl create namespace crossplane-system --dry-run=client -o yaml | kubectl apply -f - 
