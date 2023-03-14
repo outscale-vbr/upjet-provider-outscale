@@ -113,7 +113,7 @@ jobs:
       env:
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
     - name: Push Docker Image
-      run: docker-push
+      run: make docker-push
       env:
         IMG: 127.0.0.1:4242/upjet-provider-outscale:${{ github.sha }}
         DOCKER_BUILDKIT: 1
