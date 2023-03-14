@@ -108,8 +108,12 @@ jobs:
         command: curl http://127.0.0.1:4242/v2
     - name: Retrieve NodePort Ip and NodePort
       run: |
-        echo nodeport_port=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services docker-registry) >> $GITHUB_ENV
-        echo nodeport_ip=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")  >> $GITHUB_ENV
+        echo 'NODEPORT_PORT<<EOF' >> $GITHUB_ENV
+        echo "$(kubectl get --namespace default -o jsonpath='{.spec.ports[0].nodePort}' services docker-registry)" >> $GITHUB_ENV
+        echo 'EOF' >> $GITHUB_ENV
+        echo 'NODEPORT_IP<<EOF' >> $GITHUB_ENV
+        echo "$(kubectl get nodes --namespace default -o jsonpath='{.items[0].status.addresses[0].address}')"  >> $GITHUB_ENV
+        echo 'EOF' >> $GITHUB_ENV
       env:
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
     - name: Push Docker Image
@@ -126,14 +130,11 @@ jobs:
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
     - name: Create ns and set credential
       run: 
-        export nodeport_port=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services docker-registry)
-        export nodeport_ip=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
-        export IMG="$nodeport_ip:$nodeport_port/$LOCAL_IMG"
         make providerconfig
       shell: bash
       env:
          KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
-         LOCAL_IMG: cluster-api-outscale-controller:${{ github.sha }}
+         IMG: ${{ env.NODEPORT_IP }}:${{ env.NODEPORT_PORT }}/cluster-api-outscale-controller:${{ github.sha }}
          OSC_ACCESS_KEY: ${{secrets.OSC_ACCESS_KEY}}
          OSC_SECRET_KEY: ${{secrets.OSC_SECRET_KEY}}
          OSC_REGION: ${{ secrets.OSC_REGION }}
