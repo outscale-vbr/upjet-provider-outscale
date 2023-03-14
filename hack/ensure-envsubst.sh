@@ -29,6 +29,7 @@ install_envsubst() {
 		if ! [ -d "${BIN_ROOT}" ]; then
 			mkdir -p "${BIN_ROOT}"
 		fi
+		go get github.com/drone/envsubst/v2/cmd/envsubst
 		go install -v github.com/drone/envsubst/v2/cmd/envsubst
 		cp "$GOPATH/bin/envsubst" "${BIN_ROOT}/envsubst"
 	else

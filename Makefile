@@ -230,7 +230,7 @@ install-crossplane:
 ENVSUBST = $(shell pwd)/bin/envsubst
 .PHONY: envsubst
 envsubst:
-  GOPATH=${GET_GOPATH} ./hack/ensure-envsubst.sh 
+	GOPATH=${GET_GOPATH} ./hack/ensure-envsubst.sh 
 
 .PHONY: providerconfig
 providerconfig: envsubst
