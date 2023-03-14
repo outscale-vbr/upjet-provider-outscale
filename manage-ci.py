@@ -164,8 +164,10 @@ def main():
     parser.add_argument("-d", "--deployment", help="Deployment", action="store_true" )
     parser.add_argument("-r", "--read", help="ReadTerraformVersion", action="store_true")
     parser.add_argument("-g", "--get", help="GetTerraformVersion", action="store_true")
+    parser.add_argument("-u", "--update", help="Update", action="store_true" )
     args = parser.parse_args()
     apply = args.apply
+    update = args.update 
     deployment = args.deployment
     pullrequest = args.pullrequest
     buildpush = args.buildpush
@@ -175,7 +177,6 @@ def main():
     get_terraform_version = args.get
 
     my_env = os.environ.copy()
-   # config.load_kube_config()
     release_title, release_body = get_release(watch_target_projet,password)
     terraform_version = release_title.replace("v","")
     current_branch = "{0}-{1}".format(branch, terraform_version)
@@ -200,15 +201,24 @@ def main():
             base_branch,
             password
         )
+    elif update:
+        my_env['TERRAFORM_PROVIDER_VERSION'] = terraform_version
+        my_env['TERRAFORM_NATIVE_PROVIDER_BINARY'] = "terraform-provider-outscale_v{0}".format(terraform_version)
+        execute_bash_cmd(["rm"," -rf", "config"], full_local_path, my_env)
+        apply(full_local_path, "patch")   
+        execute_bash_cmd(["make", "submodules"], full_local_path, my_env )
+        execute_bash_cmd(["make", "build"], full_local_path, my_env)
+        execute_bash_cmd(["make", "docker-buildx"], full_local_path, my_env)
+        execute_bash_cmd(["make", "docker-push"], full_local_path, my_env)     
     elif buildpush:
         my_env['TERRAFORM_PROVIDER_VERSION'] = terraform_version
         my_env['TERRAFORM_NATIVE_PROVIDER_BINARY'] = "terraform-provider-outscale_v{0}".format(terraform_version)
-        execute_bash_cmd(["cat", "Makefile"], full_local_path, my_env )
         execute_bash_cmd(["make", "submodules"], full_local_path, my_env )
         execute_bash_cmd(["make", "build"], full_local_path, my_env)
         execute_bash_cmd(["make", "docker-buildx"], full_local_path, my_env)
         execute_bash_cmd(["make", "docker-push"], full_local_path, my_env)
     elif deployment:
+        config.load_kube_config()
         print("Set deployment")
         wait_for_installation_timeout = 360
         timeout = time.time() + wait_for_installation_timeout

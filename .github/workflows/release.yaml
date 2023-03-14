@@ -25,11 +25,30 @@ jobs:
     - name: Install golang
       uses: actions/setup-go@v3
       with:
-        go-version: '>=1.17.8'
+        go-version: '1.19.7'
     - name: Install helm
       uses: azure/setup-helm@v3
       with:
         version: v3.10.1
+    - name: Install python version
+      uses: gabrielfalcao/pyenv-action@v11
+      with:
+        default: "3.10"
+        command: pip install -U pip
+      
+    - name: Install deps
+      run: |
+        sudo pip3 install --ignore-installed -r requirements.txt
+        sudo mkdir /root/.kube
+        sudo touch /root/.kube/config
+      env:
+        git_full_local_path: /tmp/upjet-provider-outscale
+        KUBECONFIG: /root/.kube/config
+    - name: Clone Repository
+      run: make clone
+      env:
+        git_full_local_path: /tmp/upjet-provider-outscale
+        git_password: ${{ secrets.UPJET_TOKEN }}
     - name: Deploy Cluster
       uses: ./rke-cluster-for-upjet/github_actions/deploy_cluster/
       with:
@@ -77,22 +96,6 @@ jobs:
         echo nodeport_ip=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")  >> $GITHUB_ENV
       env:
         KUBECONFIG: rke-cluster-for-upjet/rke/kube_config_cluster.yml
-    - name: Install python version
-      uses: gabrielfalcao/pyenv-action@v11
-      with:
-        default: "3.10"
-        command: pip install -U pip
-    - name: Install deps
-      run: |
-        sudo pip3 install --ignore-installed -r requirements.txt
-      env:
-        git_full_local_path: /tmp/upjet-provider-outscale
-        KUBECONFIG: /root/.kube/config
-    - name: Clone Repository
-      run: make clone
-      env:
-        git_full_local_path: /tmp/upjet-provider-outscale
-        git_password: ${{ secrets.UPJET_TOKEN }}
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
     - name: Build and Push Docker Image
